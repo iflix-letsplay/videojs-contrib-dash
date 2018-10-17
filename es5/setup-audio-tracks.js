@@ -46,6 +46,7 @@ function handlePlaybackMetadataLoaded(player, tech) {
   }
 
   var currentAudioTrack = mediaPlayer.getCurrentTrackFor('audio');
+  var enabledTrack;
 
   dashAudioTracks.forEach(function (dashTrack) {
     var label = dashTrack.lang;
@@ -55,13 +56,18 @@ function handlePlaybackMetadataLoaded(player, tech) {
     }
 
     // Add the track to the player's audio track list.
-    videojsAudioTracks.addTrack(new _video2['default'].AudioTrack({
-      enabled: dashTrack === currentAudioTrack,
+    var tr = new _video2['default'].AudioTrack({
+      enabled: dashTrack.index === 0,
       id: generateIdFromTrackIndex(dashTrack.index),
       kind: dashTrack.kind || 'main',
       label: label,
       language: dashTrack.lang
-    }));
+    })
+    if (tr.enabled) {
+      enabledTrack = tr
+    }
+
+    videojsAudioTracks.addTrack(tr);
   });
 
   videojsAudioTracks.addEventListener('change', function () {
@@ -80,6 +86,14 @@ function handlePlaybackMetadataLoaded(player, tech) {
       }
     }
   });
+
+  player.one('canplay', () => {
+    if (enabledTrack) {
+      enabledTrack.enabled = true
+    } else {
+      player.audioTracks()[0].enabled = true
+    }
+  })
 }
 
 /*
